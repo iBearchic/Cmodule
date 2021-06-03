@@ -3,12 +3,13 @@
 
 /* Functions of serching inner-coefficient*/
 static PyObject *king(PyObject *self, PyObject *args) {
-  int orig, bvi, n;
+  int orig, bvi;
   double result;
 
-  if (!PyArg_ParseTuple(args,"iii", &orig, &bvi, &n)) {
+  if (!PyArg_ParseTuple(args,"ii", &orig, &bvi)) {
     return NULL;
   }
+  int n = 25;
   double orig_k = 0.6;
   double bvi_k = 0.4;
   result = 0.0001 + (double)((orig * orig_k + bvi * bvi_k ) / n);
@@ -44,21 +45,33 @@ static PyObject *kp(PyObject *self, PyObject *args) {
     return Py_BuildValue("d", result);
 }
 
-/* Helping coefficient
+/* Helping coefficient*/
 static PyObject *kd(PyObject *self, PyObject *args) {
     int n;
-    int *lst;
-    if (!PyArg_ParseTuple(args,"dl", &n, &lst)) {
+    PyObject* lst;
+    if (!PyArg_ParseTuple(args,"iO", &n, &lst)) {
         return NULL;
     }
+
     double temp = 1.0;
-    for(int i = 0, i < n, i++)
+    for(int i = 0; i < n; i++)
     {
-        temp = temp - king(lst[i][0][0], lst[i][0][1], 25);
+        PyObject* temp0 = PySequence_GetItem(lst, i);
+        PyObject* temp01 = PySequence_GetItem(temp0, 0);
+        PyObject* lst0 = PySequence_GetItem(temp01, 0);
+        PyObject* lst1 = PySequence_GetItem(temp01, 1);
+
+        int orig = PyLong_AsLong(lst0); 
+        int bvi = PyLong_AsLong(lst1);
+        double orig_k = 0.6;
+        double bvi_k = 0.4;
+        double res = 0.0001 + (double)((orig * orig_k + bvi * bvi_k ) / 25);
+        temp = temp - res;
     }
+
     temp = temp * 1.001203200114052001;
     return Py_BuildValue("d", temp);
-}*/
+}
 
 static PyMethodDef ownmod_methods[] = {
     { 
@@ -78,6 +91,12 @@ static PyMethodDef ownmod_methods[] = {
         kp, // function C declaration
         METH_VARARGS, // special macros about function arguments
         "Partition coefficient" // doc for function in python interpreter
+    },
+    { 
+        "kd", // name of fucntion in python interpreter
+        kd, // function C declaration
+        METH_VARARGS, // special macros about function arguments
+        "Helping coefficient" // doc for function in python interpreter
     },
     { NULL, NULL, 0, NULL }
 };
