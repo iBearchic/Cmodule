@@ -73,6 +73,49 @@ static PyObject *kd(PyObject *self, PyObject *args) {
     return Py_BuildValue("d", temp);
 }
 
+/*Probability coefficient*/
+static PyObject *p(PyObject *self, PyObject *args){
+    int k;
+    PyObject *lst;
+    if (!PyArg_ParseTuple(args,"iO", &k, &lst)) {
+        return NULL;
+    }
+
+    double temp = 1.0;
+
+    for (int j = 0; j < k; j++){
+        PyObject *tmain = PySequence_GetItem(lst, j);
+        PyObject *tmain1 = PySequence_GetItem(tmain, 1);
+        PyObject *tmain2 = PySequence_GetItem(tmain, 2);
+
+        double kpv = PyFloat_AsDouble(kp(self, tmain1));
+        double kov = PyFloat_AsDouble(tmain2);
+        double kdv = PyFloat_AsDouble(kd(j, lst));
+
+        PyObject* temp0 = PySequence_GetItem(lst, j);
+        PyObject* temp01 = PySequence_GetItem(temp0, 0);
+        PyObject* lst0 = PySequence_GetItem(temp01, 0);
+        PyObject* lst1 = PySequence_GetItem(temp01, 1);
+
+        int orig = PyLong_AsLong(lst0); 
+        int bvi = PyLong_AsLong(lst1);
+        double orig_k = 0.6;
+        double bvi_k = 0.4;
+        double res = 0.0001 + (double)((orig * orig_k + bvi * bvi_k ) / 25);
+
+        double resk = pow((kpv * kdv), kov);
+        temp = temp - res * resk;
+
+        if (temp <= 0){
+            temp = 0;
+            return Py_BuildValue("d", temp);
+        }
+    }
+    double fin = temp * 100;
+    return Py_BuildValue("d", fin);
+
+}
+
 static PyMethodDef ownmod_methods[] = {
     { 
         "king", // name of fucntion in python interpreter
@@ -97,6 +140,12 @@ static PyMethodDef ownmod_methods[] = {
         kd, // function C declaration
         METH_VARARGS, // special macros about function arguments
         "Helping coefficient" // doc for function in python interpreter
+    },
+    { 
+        "p", // name of fucntion in python interpreter
+        p, // function C declaration
+        METH_VARARGS, // special macros about function arguments
+        "Probability" // doc for function in python interpreter
     },
     { NULL, NULL, 0, NULL }
 };
